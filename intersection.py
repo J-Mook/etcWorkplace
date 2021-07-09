@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 def creat_mesh():
 	
-	ply_folder_path = os.path.dirname(os.path.realpath(__file__)) + "\data"
+	ply_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 	
 	ply_list = sorted(os.listdir(ply_folder_path))
 	
