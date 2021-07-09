@@ -16,7 +16,7 @@ def creat_mesh():
 	# for ply in ply_list:
 	# 	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path,ply))
 
-	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path, ply_list[2]))
+	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path, ply_list[0]))
 	pcd_load = pcd_load.voxel_down_sample(voxel_size=0.001)
 	print(type(pcd_load))
 	print(pcd_load)
