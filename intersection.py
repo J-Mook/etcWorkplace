@@ -7,21 +7,20 @@ import os
 from tqdm import tqdm
 
 def creat_mesh():
-
-	ply_folder_path = os.path.dirname(os.path.realpath(__file__))
-	# ply_name = 'temp.png'
-
-	ply_list = sorted(os.listdir(ply_folder_path + '/data'))
+	
+	ply_folder_path = os.path.dirname(os.path.realpath(__file__)) + "\data"
+	
+	ply_list = sorted(os.listdir(ply_folder_path))
 	
 	pcd_test = o3d.geometry.PointCloud()
 	# for ply in ply_list:
 	# 	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path,ply))
 
-	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path,ply_list[0]))
+	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path, ply_list[2]))
 	pcd_load = pcd_load.voxel_down_sample(voxel_size=0.001)
 	print(type(pcd_load))
 	print(pcd_load)
-	o3d.visualization.draw_geometries([pcd_load])
+	o3d.visualization.draw_geometries_with_editing([pcd_load])
 
 def LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6):
  

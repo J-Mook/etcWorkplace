@@ -4,10 +4,11 @@ import pandas as pd
 import os
 from tqdm import tqdm
 
+# ply_folder_path = os.path.dirname(os.path.realpath(__file__))
 ply_folder_path = r"C:\Users\pc\Desktop\Data\ply"
 ply_list = sorted(os.listdir(ply_folder_path))
 
-pcd_test = o3d.geometry.PointCloud()
+# pcd_test = o3d.geometry.PointCloud()
 
 # for i in tqdm(range(len(ply_list))):
 #     pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path,ply_list[i]))
@@ -18,7 +19,7 @@ pcd_test = o3d.geometry.PointCloud()
 
 pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path,ply_list[0]))
 pcd_load = pcd_load.voxel_down_sample(voxel_size=0.0001)
-print(type(pcd_test))
+# print(type(pcd_test))
 
 
 # data_xyz = pd.DataFrame(arr, columns =["x", "y", "z"])
