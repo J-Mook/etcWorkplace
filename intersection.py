@@ -12,15 +12,27 @@ def creat_mesh():
 	
 	ply_list = sorted(os.listdir(ply_folder_path))
 	
-	pcd_test = o3d.geometry.PointCloud()
-	# for ply in ply_list:
-	# 	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path,ply))
+	# pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path, ply_list[0]))
+	# pcd_load = pcd_load.voxel_down_sample(voxel_size=0.001)
+	
+	ply_mesh = o3d.io.read_triangle_mesh(os.path.join(ply_folder_path, ply_list[0]))
+	ply_mesh.compute_vertex_normals()
 
-	pcd_load = o3d.io.read_point_cloud(os.path.join(ply_folder_path, ply_list[0]))
-	pcd_load = pcd_load.voxel_down_sample(voxel_size=0.001)
-	print(type(pcd_load))
-	print(pcd_load)
-	o3d.visualization.draw_geometries_with_editing([pcd_load])
+	ply_mesh_tri = np.asarray(ply_mesh.triangles)
+	ply_mesh_vert = np.asarray(ply_mesh.vertices)
+	ply_mesh_norm = np.asarray(ply_mesh.triangle_normals)
+	
+	for i, triangle in enumerate(ply_mesh_tri[0:3]):
+		a = LinePlaneCollision(ply_mesh_norm[i],ply_mesh_vert[i][0], rayDirection, rayPoint, epsilon=1e-6)
+		
+		print(a)
+		# print(ply_mesh_vert[ply_mesh_tri[i][1]])
+		# print(ply_mesh_vert[ply_mesh_tri[i][2]])
+		
+	# for ply_meshes in ply_mesh_arr:	
+		# print(ply_meshes)
+		
+	# o3d.visualization.draw_geometries([ply_mesh])
 
 def LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6):
  
@@ -39,9 +51,9 @@ if __name__=="__main__":
 	# planeNormal = np.array([0, 0, 2])
 	# planePoint = np.array([0, 0, 5]) #Any point on the plane
  
-	# #Define ray
-	# rayDirection = np.array([0, -1, 1])
-	# rayPoint = np.array([0, 0, 10]) #Any point along the ray
+	#Define ray
+	rayDirection = np.array([0, -1, -1])
+	rayPoint = np.array([0, 0, 0]) #Any point along the ray
 	
 	# Psi = LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint)
 	# print ("intersection at", Psi)
