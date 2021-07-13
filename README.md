@@ -1,5 +1,5 @@
-# etcWorkplace
-
+# Lidar_simulator
+<img width="1072" alt="스크린샷 2021-07-13 오후 11 05 25" src="https://user-images.githubusercontent.com/74070059/125466161-352dc433-338b-4b59-9a42-e25fcc479b32.png">
 ## 사용자 설정 변수
 - seperate_spr : 반구면을 n * n 개로 분할한다.
 - Source_point : 센서의 위치
