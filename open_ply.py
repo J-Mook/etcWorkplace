@@ -13,7 +13,7 @@ for ply in ply_list:
     if pcd_load != []:
         print(len(arr))
         arr_avg.append(len(arr))
-        # o3d.visualization.draw_geometries_with_editing([pcd_load])
+        o3d.visualization.draw_geometries_with_editing([pcd_load])
     else:
         print("this file is empty!!")
 
