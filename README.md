@@ -7,11 +7,11 @@
                         (1 입력 시, 설정한 Source_point에서 1회 센싱)
 
 ## 1) Input & Output, 기능
-  ### _Input data_ : mesh data(.stl)
-  ### _path_ : raycast.py가 존재하는 경로의 /data 폴더
+Input data_ : mesh data(.stl)
+path : raycast.py가 존재하는 경로의 /data 폴더
 
-  ### _Output data_ : pointcloud data (.ply)
-  ### _path_ : input data 경로의 /ply 폴더
+Output data_ : pointcloud data (.ply)
+path : input data 경로의 /ply 폴더
 
   ### 기능 - 사용자가 설정한 Source_point를 기준으로 하여 z축을 중심으로 회전하며 camera_moving_mount값 만큼 pointcloud를 반환한다.
   ### - seperate_spr를 조정하여 라이다 포인터의 밀도를 조절한다.
