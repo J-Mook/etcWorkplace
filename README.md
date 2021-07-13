@@ -13,7 +13,7 @@ Input data : mesh data(.stl)
 Output data_ : pointcloud data (.ply)
   path : /파일위치/data/ply
 
-####기능
+#### 기능
     - 사용자가 설정한 Source_point를 기준으로 하여 z축을 중심으로 회전하며 camera_moving_mount값 만큼 pointcloud를 반환한다.
     - seperate_spr를 조정하여 라이다 포인터의 밀도를 조절한다.
 
