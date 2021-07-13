@@ -7,7 +7,7 @@
                         (1 입력 시, 설정한 Source_point에서 1회 센싱)
 
 ## 1) Input & Output, 기능
-Input data : mesh data(.stl)
+//Input data : mesh data(.stl)
   path : /파일위치/data
 
 Output data_ : pointcloud data (.ply)
