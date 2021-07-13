@@ -26,6 +26,7 @@ Output data_ : pointcloud data (.ply)
   castRay는 검출순서대로 list type의 결과값이 리턴되어 첫번째 값(가장 먼저 검출)만을 사용하여 pointcloud로 변환하였다.
 
   pycaster docs : https://pypi.org/project/pycaster/
+  
   pycaster project link : https://bitbucket.org/somada141/pycaster/src/master/
 
 ## 3)연산시간 관련 개발
