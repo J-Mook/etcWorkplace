@@ -5,14 +5,14 @@ import numpy as np
 from tqdm import tqdm
 import math
 from plyfile import PlyElement, PlyData
-
+import time, sys
 PI = 3.14159265358979
 
 ##initialize
-Source_point = [1000, 800.0, 1000] #lidar location (width ,depth ,height)
-seperate_spr = 1000 #liar point amount
+Source_point = [500, 800.0, 500] #lidar location (width ,depth ,height)
+seperate_spr = 100 #liar point amount
 
-camera_moving_mount = 20
+camera_moving_mount = 10
 
 def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
     # point to surface
@@ -22,7 +22,7 @@ def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
     max_anlge_xy = source_angle_xy + PI/4
     min_angle_z = source_angle_z - PI/2
     max_anlge_z = source_angle_z + PI/2
-
+    
     for i in tqdm(range(0, seperate_n), leave = False, position = 2):
         for j in range(0, seperate_n):
             # pTarget = creat_spherial(sphere_redius, i * 2 * PI/seperate_n, j * PI/seperate_n, pSource)
@@ -98,30 +98,42 @@ stl_file_name = "TestSpecimenAssy.stl"
 stl_file = os.path.join(stl_folder_path, stl_file_name)
 caster = rayCaster.fromSTL(stl_file, scale = 1)
 
-##scanning
+runtime=[]
+##scanning multiple location
 for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
+    
+    start = time.time()
     
     pcd_list = []
     pcd = o3d.geometry.PointCloud()
 
-    now_point = camera_move(Source_point, move_num)
-    redius = find_sphere_redius(stl_file, now_point)
-    make_pcd_spr2pnt(now_point, seperate_spr, redius)
+    if camera_moving_mount != 1:
+        now_point = camera_move(Source_point, move_num)
+        redius = find_sphere_redius(stl_file, now_point)
+        make_pcd_spr2pnt(now_point, seperate_spr, redius)
+    else:
+        redius = find_sphere_redius(stl_file, Source_point)
+        make_pcd_spr2pnt(Source_point, seperate_spr, redius)
 
     ## scanning data convert to pointcloud data
     pcd_array = np.asarray(pcd_list, dtype=np.float32)
     pcd.points = o3d.utility.Vector3dVector(pcd_array)
     # pcd = pcd.voxel_down_sample(voxel_size=0.001)
 
-    ##sanning data visulaization
-    print(len(np.array(pcd.points)))
+    ##scanning data visulaization
+    # print(len(np.array(pcd.points)))
     if pcd != []:
-        # o3d.visualization.draw_geometries([pcd])
+        o3d.visualization.draw_geometries([pcd])
         pass
+    
+        # ply = np.asarray(pcd_array.points)
+        ply_name = stl_file_name.split(".")[0]+ "_" +format(seperate_spr, '04') + ".ply"
+        save_path = os.path.join(save_ply_folder_path, ply_name)
+        save_float_ply(pcd_array, save_path)
+
+        sys.stdout = open('runtime_check.txt','a')
+        print(time.time()-start)
+
     else:
         print("pointcloud is empty")
 
-    # ply = np.asarray(pcd_array.points)
-    ply_name = stl_file_name.split(".")[0]+ "_" +str(move_num) + ".ply"
-    save_path = os.path.join(save_ply_folder_path, ply_name)
-    save_float_ply(pcd_array, save_path)
