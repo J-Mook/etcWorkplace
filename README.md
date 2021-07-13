@@ -14,8 +14,8 @@ Output data_ : pointcloud data (.ply)
   path : /파일위치/data/ply
 
 #### 기능
-    - 사용자가 설정한 Source_point를 기준으로 하여 z축을 중심으로 회전하며 camera_moving_mount값 만큼 pointcloud를 반환한다.
-    - seperate_spr를 조정하여 라이다 포인터의 밀도를 조절한다.
+  - 사용자가 설정한 Source_point를 기준으로 하여 z축을 중심으로 회전하며 camera_moving_mount값 만큼 pointcloud를 반환한다.
+  - seperate_spr를 조정하여 라이다 포인터의 밀도를 조절한다.
 
 ## 2) 원리 
   한점에서 구면까지 잇는 선분을 생성하고 선분과 모델링 데이터의 교점 중 첫번째 교점만을 pointcloud 데이터로 수집하였다.
