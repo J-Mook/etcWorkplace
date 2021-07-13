@@ -35,9 +35,11 @@ Output data_ : pointcloud data (.ply)
 ## 4) 개선필요점
   * 더욱 빠른 연산을 위한 개선
   <img width="697" alt="스크린샷 2021-07-13 오후 10 38 36" src="https://user-images.githubusercontent.com/74070059/125461967-3b3200e5-f9d9-4279-8108-ec66c899e2cf.png">
+  
   위 그래프로와 같이 라이다 포인트 검출 갯수에 비례하여 계산 소요시간이 증가하였다. 
   
   ![스크린샷 2021-07-13 오후 5 56 23](https://user-images.githubusercontent.com/74070059/125462055-1be1b6fe-d28b-4960-a503-b2ffb0912f3e.png)
+  
   반구면 전체가 물체를 통과하지 않으므로 일정 효율을 넘지 못한다.
   
 ### 개발노트(개발순서)
@@ -49,6 +51,4 @@ Output data_ : pointcloud data (.ply)
 
   V3_ 실제 Lidar는 빛은 평면에 일정한 간격이 아닌 구면에 일정한 각도로 빛이 방출되므로 구면을 이루는 점들과 센서위치의 한 점을 잇는 선분을 이용하여 교점을 검출
   
-  <img width="668" alt="스크린샷 2021-07-13 오후 5 56 46" src="https://user-images.githubusercontent.com/74070059/125461875-50d1ddaa-d3ca-4cd8-88ef-5b76986c6661.png">
-
   V4_ 매번 시점을 변경하지않고, 원형으로 시점을 자동변경하는 기능을 추가
