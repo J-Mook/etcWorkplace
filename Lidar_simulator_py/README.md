@@ -32,19 +32,25 @@ Output data_ : pointcloud data (.ply)
   
   pycaster project link : https://bitbucket.org/somada141/pycaster/src/master/
 
-## 3)연산시간 관련 개발
-  구면 전체를 사용하지 않고, 센서위치에서 원점을 바라보는 방향의 반구면을 사용
-  구면의 반지름을 계산할때 동적계획법(Dynamic programming)을 사용하여 빠른속도로 최대 반지름을 계산
-
+## 3) 연산시간 관련 개발
+  + 구면 전체를 사용하지 않고, 센서위치에서 원점을 바라보는 방향의 반구면을 사용   
+  + 구면의 반지름을 계산할때 동적계획법(Dynamic programming)을 사용하여 빠른속도로 최대 반지름을 계산   
+  <pre>
+  <code>
+  for k in mesh:
+    pnt2src_dist = math.dist(k,point)
+    longest_distance = max(pnt2src_dist,longest_distance)
+    </code>
+</pre>
 ## 4) 개선필요점
   * 더욱 빠른 연산을 위한 개선
-  <img width="697" alt="스크린샷 2021-07-13 오후 10 38 36" src="https://user-images.githubusercontent.com/74070059/125461967-3b3200e5-f9d9-4279-8108-ec66c899e2cf.png">
-  
-  위 그래프로와 같이 라이다 포인트 검출 갯수에 비례하여 계산 소요시간이 증가하였다. 
+  <img width="696" alt="스크린샷 2021-07-14 오전 9 23 43" src="https://user-images.githubusercontent.com/74070059/125541731-80cd9f0d-d24b-4446-9b37-4803cbe583e5.png">
+
+  위 그래프로와 같이 라이다 포인트와 비례하여 계산 소요시간이 증가하였다. 
   
   ![스크린샷 2021-07-13 오후 5 56 23](https://user-images.githubusercontent.com/74070059/125462055-1be1b6fe-d28b-4960-a503-b2ffb0912f3e.png)
   
-  반구면 전체가 물체를 통과하지 않으므로 일정 효율을 넘지 못한다.
+  실제 모든 라이다 포인트가 물체에 도달하지 않으므로 일정 효율을 넘지 못한다.
   
 ### 개발노트
   * _V0 pycaster python3 작동확인

@@ -11,28 +11,32 @@ PI = 3.14159265358979
 ##initialize
 Source_point = [500, 800.0, 500] #lidar location (width ,depth ,height)
 seperate_spr = 100 #liar point amount
+fov = []
 
 camera_moving_mount = 10
 
 def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
     # point to surface
+    pcd = []
     source_angle_xy = math.atan2(-1 * pSource[1], -1 * pSource[0])
     source_angle_z = cal_angle([-1 * pSource[0], -1 * pSource[1], -1 * pSource[2]], [1 * pSource[0], 1 * pSource[1], 0])
     min_angle_xy = source_angle_xy - PI/4
     max_anlge_xy = source_angle_xy + PI/4
-    min_angle_z = source_angle_z - PI/2
-    max_anlge_z = source_angle_z + PI/2
+    min_angle_z = source_angle_z - math.radians(34)
+    max_anlge_z = source_angle_z + math.radians(34)
     
     for i in tqdm(range(0, seperate_n), leave = False, position = 2):
         for j in range(0, seperate_n):
-            pTarget = creat_spherial(sphere_redius, (i * (max_anlge_z - min_angle_z) / seperate_n) + min_angle_z, (j * (max_anlge_xy - min_angle_xy) / seperate_n) + min_angle_xy, pSource)
+            pTarget = creat_sphere(sphere_redius, (i * (max_anlge_z - min_angle_z) / seperate_n) + min_angle_z, (j * (max_anlge_xy - min_angle_xy) / seperate_n) + min_angle_xy, pSource)
             try:
                 pointsIntersection = caster.castRay(pSource, pTarget)
-                pcd_list.append(pointsIntersection[0])      
+                pcd.append(pointsIntersection[0])      
             except:
                 pass
+    
+    return pcd
 
-def creat_spherial(r, phi, theta, source_point):
+def creat_sphere(r, phi, theta, source_point):
     x = r * math.sin(phi) * math.cos(theta) + source_point[0]
     y = r * math.sin(phi) * math.sin(theta) + source_point[1]
     z = r * math.cos(phi) + source_point[2]
@@ -69,9 +73,8 @@ def find_sphere_redius(file, point):
     # o3d.visualization.draw_geometries([mesh])
     mesh = np.array(mesh.points)
     longest_distance = 0
-    for k in tqdm(range(len(mesh)), leave = False, position = 1):
-        pnt2src_dist = math.dist(mesh[k],point)
-        mesh[k][2] = pnt2src_dist
+    for k in mesh:
+        pnt2src_dist = math.dist(k,point)
         longest_distance = max(pnt2src_dist,longest_distance)
 
     return longest_distance
@@ -100,18 +103,16 @@ runtime=[]
 ##scanning multiple location
 for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
     
-    start = time.time()
-    
     pcd_list = []
     pcd = o3d.geometry.PointCloud()
 
     if camera_moving_mount != 1:
         now_point = camera_move(Source_point, move_num)
         redius = find_sphere_redius(stl_file, now_point)
-        make_pcd_spr2pnt(now_point, seperate_spr, redius)
+        pcd_list = make_pcd_spr2pnt(now_point, seperate_spr, redius)
     else:
         redius = find_sphere_redius(stl_file, Source_point)
-        make_pcd_spr2pnt(Source_point, seperate_spr, redius)
+        pcd_list = make_pcd_spr2pnt(Source_point, seperate_spr, redius)
 
     ## scanning data convert to pointcloud data
     pcd_array = np.asarray(pcd_list, dtype=np.float32)
@@ -128,10 +129,7 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
         ply_name = stl_file_name.split(".")[0]+ "_" +format(seperate_spr, '04') + ".ply"
         save_path = os.path.join(save_ply_folder_path, ply_name)
         save_float_ply(pcd_array, save_path)
-
-        sys.stdout = open('runtime_check.txt','a')
-        print(time.time()-start)
-
+        
     else:
         print("pointcloud is empty")
 
