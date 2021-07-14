@@ -1,3 +1,4 @@
+from numpy.core.records import array
 from pycaster.pycaster import rayCaster
 import os
 import open3d as o3d
@@ -5,36 +6,52 @@ import numpy as np
 from tqdm import tqdm
 import math
 from plyfile import PlyElement, PlyData
-import time, sys
 PI = 3.14159265358979
 
 ##initialize
-Source_point = [500, 800.0, 500] #lidar location (width ,depth ,height)
-seperate_spr = 100 #liar point amount
-fov = []
+Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
+Resolution = 32000 #liar point amount
+camera_moving_mount = 1
+tSource = [0,0, 200]
+select_model = 'm'
 
-camera_moving_mount = 10
+medels_data = {'s' : [[343, 360, 382],[384,442,520]], 'm' : [[317, 590, 826],[458, 650, 1118]], 'l' : [[600, 1082, 1644],[870, 1239, 2150]]} #[[width],[lenth]]
+seperate_spr = int(math.sqrt(Resolution))
 
 def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
     # point to surface
     pcd = []
-    source_angle_xy = math.atan2(-1 * pSource[1], -1 * pSource[0])
-    source_angle_z = cal_angle([-1 * pSource[0], -1 * pSource[1], -1 * pSource[2]], [1 * pSource[0], 1 * pSource[1], 0])
-    min_angle_xy = source_angle_xy - PI/4
-    max_anlge_xy = source_angle_xy + PI/4
-    min_angle_z = source_angle_z - math.radians(34)
-    max_anlge_z = source_angle_z + math.radians(34)
+    min_angle_xy, max_anlge_xy, min_angle_z, max_anlge_z = setting_ROI(pSource, tSource)
     
     for i in tqdm(range(0, seperate_n), leave = False, position = 2):
         for j in range(0, seperate_n):
             pTarget = creat_sphere(sphere_redius, (i * (max_anlge_z - min_angle_z) / seperate_n) + min_angle_z, (j * (max_anlge_xy - min_angle_xy) / seperate_n) + min_angle_xy, pSource)
             try:
                 pointsIntersection = caster.castRay(pSource, pTarget)
-                pcd.append(pointsIntersection[0])      
+                if math.dist(pointsIntersection[0], pSource) >= medels_data[select_model][1][0]:
+                    pcd.append(pointsIntersection[0])      
             except:
                 pass
     
     return pcd
+    
+def setting_ROI(start_point, ROI_point):
+    source_angle_xy = math.atan2(0 - start_point[1], 0 - start_point[0])
+    # source_angle_z = cal_angle([start_point[0], start_point[1], 0], [ 0 - start_point[0], 0 - start_point[1], start_point[2] + target_z])
+    source_angle_z = cal_angle([start_point[0],start_point[1], 0], [start_point[0] - ROI_point[0],
+                                 start_point[1] - ROI_point[1], start_point[2] - ROI_point[2]])
+    
+    # xy_min = source_angle_xy - PI/8
+    # xy_max = source_angle_xy + PI/8
+    # z_min = source_angle_z - PI/8 + PI/2
+    # z_max = source_angle_z + PI/8 + PI/2
+    xy_min = source_angle_xy - PI/8
+    xy_max = source_angle_xy + PI/8
+    z_min = source_angle_z - math.radians(17) + PI/2
+    z_max = source_angle_z + math.radians(17) + PI/2
+    
+    return xy_min, xy_max, z_min, z_max
+
 
 def creat_sphere(r, phi, theta, source_point):
     x = r * math.sin(phi) * math.cos(theta) + source_point[0]
@@ -61,11 +78,8 @@ def save_float_ply(arr, save_path):
     el = PlyElement.describe(vertex, 'vertex')
     PlyData([el],text=True).write(save_path)
 
-def cal_angle(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'    """
-    cosang = np.dot(v1, v2)
-    sinang = np.linalg.norm(np.cross(v1, v2))
-    return np.arctan2(sinang, cosang)
+def cal_angle(v, w):
+    return np.arccos(np.dot(v,w)/(np.linalg.norm(v)*np.linalg.norm(w)))
 
 def find_sphere_redius(file, point):
     mesh = o3d.io.read_triangle_mesh(file)
@@ -89,6 +103,11 @@ def camera_move(start_point, moving_mount):
 
     return [x, y, z]
 
+def check_fov(source_point, check_point):
+
+
+    return check_point
+
 ##search stl file data
 stl_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 save_ply_folder_path = os.path.join(stl_folder_path, "ply")
@@ -108,10 +127,12 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
 
     if camera_moving_mount != 1:
         now_point = camera_move(Source_point, move_num)
-        redius = find_sphere_redius(stl_file, now_point)
+        # redius = find_sphere_redius(stl_file, now_point)
+        redius = medels_data[select_model][1][2]
         pcd_list = make_pcd_spr2pnt(now_point, seperate_spr, redius)
     else:
-        redius = find_sphere_redius(stl_file, Source_point)
+        # redius = find_sphere_redius(stl_file, Source_point)
+        redius = medels_data[select_model][1][2]
         pcd_list = make_pcd_spr2pnt(Source_point, seperate_spr, redius)
 
     ## scanning data convert to pointcloud data
@@ -121,15 +142,13 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
 
     ##scanning data visulaization
     # print(len(np.array(pcd.points)))
-    if pcd != []:
-        o3d.visualization.draw_geometries([pcd])
-        pass
-    
-        # ply = np.asarray(pcd_array.points)
+    if pcd_array.size != 0:
+        # o3d.visualization.draw_geometries([pcd])
         ply_name = stl_file_name.split(".")[0]+ "_" +format(seperate_spr, '04') + ".ply"
         save_path = os.path.join(save_ply_folder_path, ply_name)
         save_float_ply(pcd_array, save_path)
-        
+        pass
     else:
-        print("pointcloud is empty")
+        print("!!!pointcloud is empty!!!")
 
+o3d.visualization.draw_geometries([pcd])
