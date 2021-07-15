@@ -44,7 +44,13 @@ Output data_ : pointcloud data (.ply)
   pycaster docs : https://pypi.org/project/pycaster/
   
   pycaster project link : https://bitbucket.org/somada141/pycaster/src/master/
-
+  
+  ##### 노이즈
+  
+  실제 센서 노이즈에 가깝게 일반 랜덤함수가 아닌 가우시안 분포르 따르는 랜덤한 숫자를 각 모델별 오차범위 내의 오차를 생성하여 x, y, z요소별로 적용
+  
+  <img width="1405" alt="스크린샷 2021-07-15 오후 9 42 02" src="https://user-images.githubusercontent.com/74070059/125789802-c030b082-9818-40bd-bd64-769248dc357e.png">   
+  (3σ = 모델별 최대 오차)
 
 ## 3) 연산시간 관련 개발
   + 구면 전체를 사용하지 않고, 센서위치에서 원점을 바라보는 방향의 반구면을 사용   
@@ -65,11 +71,18 @@ Output data_ : pointcloud data (.ply)
   
   ![스크린샷 2021-07-13 오후 5 56 23](https://user-images.githubusercontent.com/74070059/125462055-1be1b6fe-d28b-4960-a503-b2ffb0912f3e.png)
   
-  ~~실제 모든 라이다 포인트가 물체에 도달하지 않으므로 일정 효율을 넘지 못한다.~~
-
+  ~~실제 모든 라이다 포인트가 물체에 도달하지 않으므로 일정 효율을 넘지 못한다.~~(완료)   
   fov 설정 및 Resolution 설정으로 해결
-
   
+  예) resolution 3200   
+  <p align="center">
+  <img width="500" alt="스크린샷 2021-07-15 오후 10 00 52" src="https://user-images.githubusercontent.com/74070059/125792894-aaaabb03-84bd-4ce1-ad32-b3798722ae2e.png"><img width="500" alt="스크린샷 2021-07-15 오후 9 19 30" src="https://user-images.githubusercontent.com/74070059/125792949-d98e8aa6-cc0f-427f-bc26-50f811a327b1.png">   
+   fov 적용 전 (좌  __________________________  우) fov 적용 후     
+  </p>
+  
+  * 실제 데이터 분석결과)   
+       
+  <img width="570" alt="image" src="https://user-images.githubusercontent.com/74070059/125797747-d7b8eaf4-e656-4cf4-962b-a4db433f8874.png">
 
 ### 개발노트
   * _V0 pycaster python3 작동확인
