@@ -11,7 +11,7 @@ PI = 3.14159265358979
 
 ##initialize
 Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
-Resolution = 320000 #liar point amount
+Resolution = 32000 #liar point amount
 camera_moving_mount = 1
 tSource = [0,0, 200]
 model_select = 'm'
@@ -45,8 +45,9 @@ def setting_ROI_angle(start_point, end_point):
     # xy_max = source_angle_xy + PI/8
     # z_min = source_angle_z - PI/8 + PI/2
     # z_max = source_angle_z + PI/8 + PI/2
-    xy_min = source_angle_xy - PI/8
-    xy_max = source_angle_xy + PI/8
+    xy_angle = math.atan(abs(((models_data[model_select][0][2] - models_data[model_select][0][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
+    xy_min = source_angle_xy - xy_angle
+    xy_max = source_angle_xy + xy_angle
     z_anlge = math.atan(abs(((models_data[model_select][2][2] - models_data[model_select][2][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
     z_min = source_angle_z - z_anlge + PI/2
     z_max = source_angle_z + z_anlge + PI/2
