@@ -10,8 +10,8 @@ import time
 PI = 3.14159265358979
 
 ##initialize
-Source_point = [450, 450, 400] #lidar location (width ,depth ,height)
-Resolution = 3200 #liar point amount
+Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
+Resolution = 32000 #liar point amount
 camera_moving_mount = 1
 Source_target = [0,0, 100]
 model_select = 'm'
@@ -53,16 +53,16 @@ def setting_ROI_angle(start_point, end_point):
     source_angle_z = cal_angle([start_point[0],start_point[1], 0], [start_point[0] - end_point[0],
                                  start_point[1] - end_point[1], start_point[2] - end_point[2]])
     
-    # xy_min = source_angle_xy - PI/8
-    # xy_max = source_angle_xy + PI/8
-    # z_min = source_angle_z - PI/8 + PI/2
-    # z_max = source_angle_z + PI/8 + PI/2
-    xy_angle = math.atan(abs(((models_data[model_select][0][2] - models_data[model_select][0][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
-    xy_min = source_angle_xy - xy_angle
-    xy_max = source_angle_xy + xy_angle
-    z_anlge = math.atan(abs(((models_data[model_select][2][2] - models_data[model_select][2][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
-    z_min = source_angle_z - z_anlge + PI/2
-    z_max = source_angle_z + z_anlge + PI/2
+    xy_min = source_angle_xy - PI/4
+    xy_max = source_angle_xy + PI/4
+    z_min = source_angle_z - PI/8 + PI/2
+    z_max = source_angle_z + PI/8 + PI/2
+    # xy_angle = math.atan(abs(((models_data[model_select][0][2] - models_data[model_select][0][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
+    # xy_min = source_angle_xy - xy_angle
+    # xy_max = source_angle_xy + xy_angle
+    # z_anlge = math.atan(abs(((models_data[model_select][2][2] - models_data[model_select][2][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
+    # z_min = source_angle_z - z_anlge + PI/2
+    # z_max = source_angle_z + z_anlge + PI/2
     
     return xy_min, xy_max, z_min, z_max
 
@@ -155,8 +155,8 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
         redius = models_data[model_select][1][2]
         pcd_list = make_pcd_spr2pnt(now_point, seperate_spr, redius)
     else:
-        # redius = find_sphere_redius(stl_file, Source_point)
-        redius = models_data[model_select][1][2]
+        redius = find_sphere_redius(stl_file, Source_point)
+        # redius = models_data[model_select][1][2]
         pcd_list = make_pcd_spr2pnt(Source_point, seperate_spr, redius)
 
     ## scanning data convert to pointcloud data
@@ -174,5 +174,6 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
         pass
     else:
         print("!!!pointcloud is empty!!!")
-print(len(np.array(pcd.points)))
+# print(Resolution)
+# print(len(np.array(pcd.points)))
 o3d.visualization.draw_geometries([pcd])
