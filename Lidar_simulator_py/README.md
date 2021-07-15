@@ -44,7 +44,7 @@ Output data_ : pointcloud data (.ply)
 </pre>
 ## 4) 개선필요점
   * 더욱 빠른 연산을 위한 개선
-  <img width="696" alt="스크린샷 2021-07-14 오전 9 23 43" src="https://user-images.githubusercontent.com/74070059/125541731-80cd9f0d-d24b-4446-9b37-4803cbe583e5.png">
+  ![스크린샷 2021-07-15 오전 9 21 20](https://user-images.githubusercontent.com/74070059/125709080-f0ae5f92-65a5-44d1-8024-7f9bdc7f9866.png)
 
   위 그래프로와 같이 라이다 포인트와 비례하여 계산 소요시간이 증가하였다. 
   
