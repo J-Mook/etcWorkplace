@@ -6,40 +6,40 @@ import numpy as np
 from tqdm import tqdm
 import math
 from plyfile import PlyElement, PlyData
+import time
 PI = 3.14159265358979
 
 ##initialize
 Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
-Resolution = 32000 #liar point amount
+Resolution = 320000 #liar point amount
 camera_moving_mount = 1
 tSource = [0,0, 200]
-select_model = 'm'
+model_select = 'm'
 
-medels_data = {'s' : [[343, 360, 382],[384,442,520]], 'm' : [[317, 590, 826],[458, 650, 1118]], 'l' : [[600, 1082, 1644],[870, 1239, 2150]]} #[[width],[lenth]]
+models_data = {'s' : [[343, 360, 382],[384,442,520],[237,272,319]], 'm' : [[317, 590, 826],[458, 650, 1118],[292,404,686]], 'l' : [[600, 1082, 1644],[870, 1239, 2150],[557, 772, 1326]]} #[[width],[lenth],[height]]
 seperate_spr = int(math.sqrt(Resolution))
 
 def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
     # point to surface
     pcd = []
-    min_angle_xy, max_anlge_xy, min_angle_z, max_anlge_z = setting_ROI(pSource, tSource)
+    min_angle_xy, max_anlge_xy, min_angle_z, max_anlge_z = setting_ROI_angle(pSource, tSource)
     
     for i in tqdm(range(0, seperate_n), leave = False, position = 2):
         for j in range(0, seperate_n):
             pTarget = creat_sphere(sphere_redius, (i * (max_anlge_z - min_angle_z) / seperate_n) + min_angle_z, (j * (max_anlge_xy - min_angle_xy) / seperate_n) + min_angle_xy, pSource)
             try:
                 pointsIntersection = caster.castRay(pSource, pTarget)
-                if math.dist(pointsIntersection[0], pSource) >= medels_data[select_model][1][0]:
-                    pcd.append(pointsIntersection[0])      
+                if check_fov(pSource, pointsIntersection[0]):
+                    pcd.append(pointsIntersection[0])
             except:
                 pass
-    
     return pcd
     
-def setting_ROI(start_point, ROI_point):
+def setting_ROI_angle(start_point, end_point):
     source_angle_xy = math.atan2(0 - start_point[1], 0 - start_point[0])
     # source_angle_z = cal_angle([start_point[0], start_point[1], 0], [ 0 - start_point[0], 0 - start_point[1], start_point[2] + target_z])
-    source_angle_z = cal_angle([start_point[0],start_point[1], 0], [start_point[0] - ROI_point[0],
-                                 start_point[1] - ROI_point[1], start_point[2] - ROI_point[2]])
+    source_angle_z = cal_angle([start_point[0],start_point[1], 0], [start_point[0] - end_point[0],
+                                 start_point[1] - end_point[1], start_point[2] - end_point[2]])
     
     # xy_min = source_angle_xy - PI/8
     # xy_max = source_angle_xy + PI/8
@@ -47,8 +47,9 @@ def setting_ROI(start_point, ROI_point):
     # z_max = source_angle_z + PI/8 + PI/2
     xy_min = source_angle_xy - PI/8
     xy_max = source_angle_xy + PI/8
-    z_min = source_angle_z - math.radians(17) + PI/2
-    z_max = source_angle_z + math.radians(17) + PI/2
+    z_anlge = math.atan(abs(((models_data[model_select][2][2] - models_data[model_select][2][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
+    z_min = source_angle_z - z_anlge + PI/2
+    z_max = source_angle_z + z_anlge + PI/2
     
     return xy_min, xy_max, z_min, z_max
 
@@ -104,9 +105,10 @@ def camera_move(start_point, moving_mount):
     return [x, y, z]
 
 def check_fov(source_point, check_point):
-
-
-    return check_point
+    if math.dist(source_point, check_point) > models_data[model_select][1][0]:
+        return True
+    else:
+        return False
 
 ##search stl file data
 stl_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
@@ -119,6 +121,7 @@ stl_file = os.path.join(stl_folder_path, stl_file_name)
 caster = rayCaster.fromSTL(stl_file, scale = 1)
 
 runtime=[]
+start=time.time()
 ##scanning multiple location
 for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
     
@@ -128,11 +131,11 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
     if camera_moving_mount != 1:
         now_point = camera_move(Source_point, move_num)
         # redius = find_sphere_redius(stl_file, now_point)
-        redius = medels_data[select_model][1][2]
+        redius = models_data[model_select][1][2]
         pcd_list = make_pcd_spr2pnt(now_point, seperate_spr, redius)
     else:
         # redius = find_sphere_redius(stl_file, Source_point)
-        redius = medels_data[select_model][1][2]
+        redius = models_data[model_select][1][2]
         pcd_list = make_pcd_spr2pnt(Source_point, seperate_spr, redius)
 
     ## scanning data convert to pointcloud data
