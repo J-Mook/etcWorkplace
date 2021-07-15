@@ -102,7 +102,6 @@ def setting_ROI_angle(start_point, end_point):
     
     return xy_min, xy_max, z_min, z_max
 
-
 def creat_sphere(r, phi, theta, source_point):
     x = r * math.sin(phi) * math.cos(theta) + source_point[0]
     y = r * math.sin(phi) * math.sin(theta) + source_point[1]

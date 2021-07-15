@@ -4,25 +4,29 @@ import os
 import open3d as o3d
 import numpy as np
 from tqdm import tqdm
-import math
+import math, random
 from plyfile import PlyElement, PlyData
 import time
 PI = 3.14159265358979
 
 ##initialize
-Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
-Resolution = 32000 #liar point amount
+Source_point = [450, 450, 400] #lidar location (width ,depth ,height)
+Resolution = 3200 #liar point amount
 camera_moving_mount = 1
-tSource = [0,0, 200]
+Source_target = [0,0, 100]
 model_select = 'm'
+noise_mode = True
 
-models_data = {'s' : [[343, 360, 382],[384,442,520],[237,272,319]], 'm' : [[317, 590, 826],[458, 650, 1118],[292,404,686]], 'l' : [[600, 1082, 1644],[870, 1239, 2150],[557, 772, 1326]]} #[[width],[lenth],[height]]
+models_data = {'xs' : [[106, 118, 133],[161,181,205],[70,78,88],[0.035]], 
+                's' : [[343, 360, 382],[384,442,520],[237,272,319],[0.050]], 
+                'm' : [[317, 590, 826],[458, 650, 1118],[292,404,686],[0.100]], 
+                'l' : [[600, 1082, 1644],[870, 1239, 2150],[557, 772, 1326],[0.200]]} #[[width],[lenth],[height],[noise]]
 seperate_spr = int(math.sqrt(Resolution))
 
 def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
     # point to surface
     pcd = []
-    min_angle_xy, max_anlge_xy, min_angle_z, max_anlge_z = setting_ROI_angle(pSource, tSource)
+    min_angle_xy, max_anlge_xy, min_angle_z, max_anlge_z = setting_ROI_angle(pSource, Source_target)
     
     for i in tqdm(range(0, seperate_n), leave = False, position = 2):
         for j in range(0, seperate_n):
@@ -30,7 +34,15 @@ def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
             try:
                 pointsIntersection = caster.castRay(pSource, pTarget)
                 if check_fov(pSource, pointsIntersection[0]):
-                    pcd.append(pointsIntersection[0])
+                    if noise_mode:
+                        noise_x = pointsIntersection[0][0] + random.gauss(0, models_data[model_select][3][0]/3)
+                        noise_y = pointsIntersection[0][1] + random.gauss(0, models_data[model_select][3][0]/3)
+                        noise_z = pointsIntersection[0][2] + random.gauss(0, models_data[model_select][3][0]/3)
+                        
+                        noise_point = tuple((noise_x, noise_y, noise_z))
+                        pcd.append(noise_point)
+                    else:
+                        pcd.append(pointsIntersection[0])
             except:
                 pass
     return pcd
@@ -106,11 +118,19 @@ def camera_move(start_point, moving_mount):
     return [x, y, z]
 
 def check_fov(source_point, check_point):
-    if math.dist(source_point, check_point) > models_data[model_select][1][0]:
-        return True
-    else:
+    if math.dist(source_point, check_point) < models_data[model_select][1][0]:
         return False
+    else:
+        return True
+    # return True
 
+
+def calc_projection(a, b):
+    # P = np.outer(a, a) / a.dot(a)
+    # return P.dot(b.T)
+    return abs(np.linalg.norm((np.dot(a, b) / np.dot(b, b)) * b))
+
+    
 ##search stl file data
 stl_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 save_ply_folder_path = os.path.join(stl_folder_path, "ply")
@@ -154,5 +174,5 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
         pass
     else:
         print("!!!pointcloud is empty!!!")
-
+print(len(np.array(pcd.points)))
 o3d.visualization.draw_geometries([pcd])

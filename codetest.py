@@ -2,10 +2,10 @@ from pycaster.pycaster import rayCaster
 # import rayCaster
 import os
 import inspect
+import random
+# print(inspect.getfile(rayCaster))
 
-print(inspect.getfile(rayCaster))
-
-
+print(random.normalvariate(0, 0.2))
 
 # def solution(n, costs):
 
