@@ -4,7 +4,7 @@
 # import inspect
 # import random
 # # print(inspect.getfile(rayCaster))
-
+####ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
 # print(random.normalvariate(0, 0.2))
 
 # # def solution(n, costs):
@@ -33,25 +33,24 @@ numsg = []
 mu = 0
 sigma = 50
     
-for i in range(1000000): 
-    temp = random.normalvariate(mu, sigma) 
-    nums.append(temp)
-    temp = random.gauss(mu, sigma) 
+for i in range(50000): 
+    # temp = random.normalvariate(mu, sigma) 
+    # nums.append(temp)
+    temp = abs(random.gauss(mu, sigma))
     numsg.append(temp)
 
-fig, axes = plt.subplots(2,1)
+# fig, axes = plt.subplots(2,1)
+# plt.subplot(2,1,1)
+# plt.hist(nums, bins = 200) 
+# plt.title("normalvariate random")
 
-plt.subplot(2,1,1)
-plt.hist(nums, bins = 200) 
-plt.title("normalvariate random")
 
+# plt.subplot(2,1,2)
+# plt.hist(numsg, bins = 200) 
+# plt.title("gauss random")
 
-plt.subplot(2,1,2)
-plt.hist(numsg, bins = 200) 
-plt.title("gauss random")
-
-fig.tight_layout()
+# fig.tight_layout()
 
 # plotting a graph 
-# plt.hist(nums, bins = 200) 
+plt.hist(numsg, bins = 200) 
 plt.show()
