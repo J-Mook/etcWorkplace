@@ -11,26 +11,35 @@ PI = 3.14159265358979
 
 ##initialize
 Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
-Resolution = 32000 #liar point amount
+Source_target = [0, 0, 100]
 camera_moving_mount = 1
-Source_target = [0,0, 100]
+mode_select = 'pinking'
+
+#Lidar Mode
+Angular_Resolution = [math.radians(1), math.radians(0.2)] #[ vertical , horizontal ]
 model_select = 'm'
 noise_mode = True
 
+#Pinking Mode
+gaussian_mode = True
+
+mode_data = {'lidar' : True , 'pinking' : False}
 models_data = {'xs' : [[106, 118, 133],[161,181,205],[70,78,88],[0.035]], 
                 's' : [[343, 360, 382],[384,442,520],[237,272,319],[0.050]], 
                 'm' : [[317, 590, 826],[458, 650, 1118],[292,404,686],[0.100]], 
                 'l' : [[600, 1082, 1644],[870, 1239, 2150],[557, 772, 1326],[0.200]]} #[[width],[lenth],[height],[noise]]
-seperate_spr = int(math.sqrt(Resolution))
 
-def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
+def make_pcd_spr2pnt(pSource, angle_sqr, sphere_redius):
     # point to surface
     pcd = []
     min_angle_xy, max_anlge_xy, min_angle_z, max_anlge_z = setting_ROI_angle(pSource, Source_target)
+    seperate_xy = int((max_anlge_xy - min_angle_xy) / angle_sqr[1])
+    seperate_z = int((max_anlge_z - min_angle_z) / angle_sqr[0])
+
     
-    for i in tqdm(range(0, seperate_n), leave = False, position = 2):
-        for j in range(0, seperate_n):
-            pTarget = creat_sphere(sphere_redius, (i * (max_anlge_z - min_angle_z) / seperate_n) + min_angle_z, (j * (max_anlge_xy - min_angle_xy) / seperate_n) + min_angle_xy, pSource)
+    for i in tqdm(range(0, seperate_z), leave = False, position = 2):
+        for j in range(0, seperate_xy):
+            pTarget = creat_sphere(sphere_redius, (i * angle_sqr[0]) + min_angle_z, (j * angle_sqr[1]) + min_angle_xy, pSource)
             try:
                 pointsIntersection = caster.castRay(pSource, pTarget)
                 if check_fov(pSource, pointsIntersection[0]):
@@ -45,7 +54,26 @@ def make_pcd_spr2pnt(pSource, seperate_n, sphere_redius):
                         pcd.append(pointsIntersection[0])
             except:
                 pass
-    return pcd
+    return pcd, seperate_xy * seperate_z
+    
+def make_pcd_ply2pnt(pSource, ply_file_path):
+    # point to surface
+    pcd = []
+    ply = o3d.io.read_point_cloud(ply_file_path)
+    ply_arr = np.array(ply.points)
+    mesh_error_correction = pSource / np.linalg.norm(pSource)
+
+    for suface_pcd in tqdm(ply_arr, leave = False, position = 2):
+        try:
+            pointsIntersection = caster.castRay(pSource, (suface_pcd + mesh_error_correction)) # allow error
+            # pointsIntersection = caster.castRay(pSource, suface_pcd) # not allow error
+            # if check_fov(pSource, pointsIntersection[0]):
+            if len(pointsIntersection) <= 0:
+                pcd.append(tuple(suface_pcd))
+        except:
+            pass
+
+    return pcd, len(ply_arr)
     
 def setting_ROI_angle(start_point, end_point):
     source_angle_xy = math.atan2(0 - start_point[1], 0 - start_point[0])
@@ -53,16 +81,16 @@ def setting_ROI_angle(start_point, end_point):
     source_angle_z = cal_angle([start_point[0],start_point[1], 0], [start_point[0] - end_point[0],
                                  start_point[1] - end_point[1], start_point[2] - end_point[2]])
     
-    xy_min = source_angle_xy - PI/4
-    xy_max = source_angle_xy + PI/4
-    z_min = source_angle_z - PI/8 + PI/2
-    z_max = source_angle_z + PI/8 + PI/2
-    # xy_angle = math.atan(abs(((models_data[model_select][0][2] - models_data[model_select][0][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
-    # xy_min = source_angle_xy - xy_angle
-    # xy_max = source_angle_xy + xy_angle
-    # z_anlge = math.atan(abs(((models_data[model_select][2][2] - models_data[model_select][2][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
-    # z_min = source_angle_z - z_anlge + PI/2
-    # z_max = source_angle_z + z_anlge + PI/2
+    # xy_min = source_angle_xy - PI/4
+    # xy_max = source_angle_xy + PI/4
+    # z_min = source_angle_z - PI/8 + PI/2
+    # z_max = source_angle_z + PI/8 + PI/2
+    xy_angle = math.atan(abs(((models_data[model_select][0][2] - models_data[model_select][0][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
+    xy_min = source_angle_xy - xy_angle
+    xy_max = source_angle_xy + xy_angle
+    z_anlge = math.atan(abs(((models_data[model_select][2][2] - models_data[model_select][2][0]) / 2 ) / (models_data[model_select][1][2] - models_data[model_select][1][0])))
+    z_min = source_angle_z - z_anlge + PI/2
+    z_max = source_angle_z + z_anlge + PI/2
     
     return xy_min, xy_max, z_min, z_max
 
@@ -118,7 +146,7 @@ def camera_move(start_point, moving_mount):
     return [x, y, z]
 
 def check_fov(source_point, check_point):
-    if math.dist(source_point, check_point) < models_data[model_select][1][0]:
+    if math.dist(source_point, check_point) < models_data[model_select][1][0] * 0.9:
         return False
     else:
         return True
@@ -132,32 +160,42 @@ def calc_projection(a, b):
 
     
 ##search stl file data
-stl_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
-save_ply_folder_path = os.path.join(stl_folder_path, "ply")
+input_data_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+save_ply_folder_path = os.path.join(input_data_folder_path, "ply")
 
-# stl_list = sorted(os.listdir(stl_folder_path))
-# for stl_file_name in stl_list:
-stl_file_name = "TestSpecimenAssy.stl"
-stl_file = os.path.join(stl_folder_path, stl_file_name)
-caster = rayCaster.fromSTL(stl_file, scale = 1)
+if mode_data[mode_select]:
+    stl_file_name = "TestSpecimenAssy.stl"
+    stl_file = os.path.join(input_data_folder_path, stl_file_name)
+    caster = rayCaster.fromSTL(stl_file, scale = 1)
+else:
+    stl_file_name = "TestSpecimenAssy.stl"
+    ply_file_name = "test_specimen_assy_poisson_sampling_66593pts.ply"
+    # ply_file_name = "test_specimen_assy_montecarlo_sampling_50000pts.ply"
+    input_ply_file = os.path.join(input_data_folder_path, ply_file_name)
+    stl_file = os.path.join(input_data_folder_path, stl_file_name)
+    caster = rayCaster.fromSTL(stl_file, scale = 1)
 
-runtime=[]
-start=time.time()
+start = time.time()
 ##scanning multiple location
 for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
     
     pcd_list = []
     pcd = o3d.geometry.PointCloud()
 
-    if camera_moving_mount != 1:
-        now_point = camera_move(Source_point, move_num)
-        # redius = find_sphere_redius(stl_file, now_point)
-        redius = models_data[model_select][1][2]
-        pcd_list = make_pcd_spr2pnt(now_point, seperate_spr, redius)
-    else:
-        redius = find_sphere_redius(stl_file, Source_point)
-        # redius = models_data[model_select][1][2]
-        pcd_list = make_pcd_spr2pnt(Source_point, seperate_spr, redius)
+    if mode_data[mode_select]:   ##LidarMode
+        if camera_moving_mount != 1:
+            now_point = camera_move(Source_point, move_num)
+            # redius = find_sphere_redius(stl_file, now_point)
+            redius = models_data[model_select][1][2]
+            pcd_list, pnt_mount = make_pcd_spr2pnt(now_point, Angular_Resolution, redius)
+        else:
+            # redius = find_sphere_redius(stl_file, Source_point)
+            redius = models_data[model_select][1][2]
+            pcd_list, pnt_mount = make_pcd_spr2pnt(Source_point, Angular_Resolution, redius)
+    
+    else:   ##PinkingMode
+        input_ply_file = os.path.join(input_data_folder_path, ply_file_name)
+        pcd_list, pnt_mount = make_pcd_ply2pnt(Source_point, input_ply_file)
 
     ## scanning data convert to pointcloud data
     pcd_array = np.asarray(pcd_list, dtype=np.float32)
@@ -167,13 +205,15 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
     ##scanning data visulaization
     # print(len(np.array(pcd.points)))
     if pcd_array.size != 0:
-        # o3d.visualization.draw_geometries([pcd])
-        ply_name = stl_file_name.split(".")[0]+ "_" +format(seperate_spr, '04') + ".ply"
-        save_path = os.path.join(save_ply_folder_path, ply_name)
-        save_float_ply(pcd_array, save_path)
+        # # o3d.visualization.draw_geometries([pcd])
+        # ply_name = stl_file_name.split(".")[0]+ "_" +format(pnt_mount, '04') + ".ply"
+        # save_path = os.path.join(save_ply_folder_path, ply_name)
+        # save_float_ply(pcd_array, save_path)
         pass
     else:
         print("!!!pointcloud is empty!!!")
-# print(Resolution)
+
+# print(pnt_mount)
+# print(time.time() - start)
 # print(len(np.array(pcd.points)))
 o3d.visualization.draw_geometries([pcd])
