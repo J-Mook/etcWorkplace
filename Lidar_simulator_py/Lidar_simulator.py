@@ -1,33 +1,73 @@
-from numpy.core.records import array
-from pycaster.pycaster import rayCaster
 import os
 import open3d as o3d
 import numpy as np
 from tqdm import tqdm
 import math, random
 from plyfile import PlyElement, PlyData
-import time
+import time, vtk
 PI = 3.14159265358979
 
 ##initialize
 Source_point = [500, 500, 400] #lidar location (width ,depth ,height)
 Source_target = [0, 0, 100]
 camera_moving_mount = 1
-mode_select = 'pinking'
+mode_select = 'lidar' # (Select lidar or pinking) 
 
 #Lidar Mode
-Angular_Resolution = [math.radians(1), math.radians(0.2)] #[ vertical , horizontal ]
+Angular_Resolution = [math.radians(0.5), math.radians(0.2)] #[ vertical , horizontal ]
 model_select = 'm'
 noise_mode = True
 
 #Pinking Mode
 gaussian_mode = True
+gaussian_crop = 0
+gaussian_density = 10
 
 mode_data = {'lidar' : True , 'pinking' : False}
 models_data = {'xs' : [[106, 118, 133],[161,181,205],[70,78,88],[0.035]], 
                 's' : [[343, 360, 382],[384,442,520],[237,272,319],[0.050]], 
                 'm' : [[317, 590, 826],[458, 650, 1118],[292,404,686],[0.100]], 
                 'l' : [[600, 1082, 1644],[870, 1239, 2150],[557, 772, 1326],[0.200]]} #[[width],[lenth],[height],[noise]]
+
+class rayCaster(object):
+    def __init__(self, mesh):
+        self.mesh = mesh  # set the 'mesh'
+        self.caster = None
+        self._initCaster()  # create a caster
+
+    @classmethod
+    def fromSTL(cls, filenameSTL, scale=1.0):
+        readerSTL = vtk.vtkSTLReader()  # create a 'vtkSTLReader' object
+        readerSTL.SetFileName(filenameSTL)  # set the .stl filename in the reader
+        readerSTL.Update()  # 'update' the reader i.e. read the .stl file
+        polydata = readerSTL.GetOutput()
+
+        # If there are no points in 'vtkPolyData' something went wrong
+        # if polydata.GetNumberOfPoints() == 0:
+        #     raise ValueError(
+        #         "No point data could be loaded from '" + filenameSTL)
+        #     return None
+
+        # Create a new 'rayCaster' with the mesh loaded from the .stl file
+        rT = cls(polydata)
+
+        return rT
+
+    def _initCaster(self):
+        #create a 'vtkOBBTree' object
+        self.caster = vtk.vtkOBBTree()
+        #set the 'mesh' as the caster's dataset
+        self.caster.SetDataSet(self.mesh)
+        #build a caster locator
+        self.caster.BuildLocator()
+
+    def castRay(self, pointRaySource, pointRayTarget):
+        pointsVTKintersection = vtk.vtkPoints()
+        if self.caster.IntersectWithLine(pointRaySource,pointRayTarget,pointsVTKintersection, None) == 0:
+            return []
+        pointsVTKIntersectionData = pointsVTKintersection.GetData()
+        return [pointsVTKIntersectionData.GetTuple3(0)]
+
 
 def make_pcd_spr2pnt(pSource, angle_sqr, sphere_redius):
     # point to surface
@@ -36,7 +76,6 @@ def make_pcd_spr2pnt(pSource, angle_sqr, sphere_redius):
     seperate_xy = int((max_anlge_xy - min_angle_xy) / angle_sqr[1])
     seperate_z = int((max_anlge_z - min_angle_z) / angle_sqr[0])
 
-    
     for i in tqdm(range(0, seperate_z), leave = False, position = 2):
         for j in range(0, seperate_xy):
             pTarget = creat_sphere(sphere_redius, (i * angle_sqr[0]) + min_angle_z, (j * angle_sqr[1]) + min_angle_xy, pSource)
@@ -54,11 +93,13 @@ def make_pcd_spr2pnt(pSource, angle_sqr, sphere_redius):
                         pcd.append(pointsIntersection[0])
             except:
                 pass
+        # print("test")
     return pcd, seperate_xy * seperate_z
     
 def make_pcd_ply2pnt(pSource, ply_file_path):
     # point to surface
     pcd = []
+    gaussian_temp = []
     ply = o3d.io.read_point_cloud(ply_file_path)
     ply_arr = np.array(ply.points)
     mesh_error_correction = pSource / np.linalg.norm(pSource)
@@ -69,9 +110,26 @@ def make_pcd_ply2pnt(pSource, ply_file_path):
             # pointsIntersection = caster.castRay(pSource, suface_pcd) # not allow error
             # if check_fov(pSource, pointsIntersection[0]):
             if len(pointsIntersection) <= 0:
-                pcd.append(tuple(suface_pcd))
+                if gaussian_mode: 
+                    # gaussian_temp.append(np.append(suface_pcd, np.array(calc_projection(np.array(Source_target) - np.array(pSource), np.array(suface_pcd) - np.array(pSource)))))
+                    gaussian_temp.append(np.append(suface_pcd, np.array(math.tan(cal_angle(np.array(Source_target) - np.array(pSource), np.array(suface_pcd) - np.array(pSource))) * calc_projection(np.array(Source_target) - np.array(pSource), np.array(suface_pcd) - np.array(pSource)))))
+                else:
+                    pcd.append(tuple(suface_pcd))
         except:
             pass
+    if gaussian_mode:
+        if (gaussian_crop > 0):
+            gaussian_temp = list(filter(lambda x: x[:][3] <= gaussian_crop, gaussian_temp))
+        gaussian_temp = sorted(gaussian_temp, key = lambda x : x[:][3])
+        gaussian_temp_len = int(len(gaussian_temp)/3)
+        for t in  range(gaussian_temp_len):
+            try:
+                temp = gaussian_temp.pop(int(abs(random.gauss(0, gaussian_temp_len/gaussian_density))))
+                pcd.append(tuple((temp[0],temp[1],temp[2])))
+            except:
+                pass
+        # if temp[3] < gaussian_crop:
+        #             pcd.append(tuple((temp[0],temp[1],temp[2])))
 
     return pcd, len(ply_arr)
     
@@ -162,19 +220,18 @@ def calc_projection(a, b):
 ##search stl file data
 input_data_folder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 save_ply_folder_path = os.path.join(input_data_folder_path, "ply")
+stl_file_name = "TestSpecimenAssy.stl"
+stl_file = os.path.join(input_data_folder_path, stl_file_name)
+caster = rayCaster.fromSTL(stl_file, scale = 1)
+# caster = fromSTL(stl_file, scale = 1)
 
 if mode_data[mode_select]:
-    stl_file_name = "TestSpecimenAssy.stl"
-    stl_file = os.path.join(input_data_folder_path, stl_file_name)
-    caster = rayCaster.fromSTL(stl_file, scale = 1)
+    pass
 else:
-    stl_file_name = "TestSpecimenAssy.stl"
     ply_file_name = "test_specimen_assy_poisson_sampling_66593pts.ply"
     # ply_file_name = "test_specimen_assy_montecarlo_sampling_50000pts.ply"
     input_ply_file = os.path.join(input_data_folder_path, ply_file_name)
-    stl_file = os.path.join(input_data_folder_path, stl_file_name)
-    caster = rayCaster.fromSTL(stl_file, scale = 1)
-
+    
 start = time.time()
 ##scanning multiple location
 for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
@@ -205,7 +262,7 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
     ##scanning data visulaization
     # print(len(np.array(pcd.points)))
     if pcd_array.size != 0:
-        # # o3d.visualization.draw_geometries([pcd])
+        o3d.visualization.draw_geometries([pcd])
         # ply_name = stl_file_name.split(".")[0]+ "_" +format(pnt_mount, '04') + ".ply"
         # save_path = os.path.join(save_ply_folder_path, ply_name)
         # save_float_ply(pcd_array, save_path)
@@ -216,4 +273,4 @@ for move_num in tqdm(range(camera_moving_mount),leave = False, position = 0):
 # print(pnt_mount)
 # print(time.time() - start)
 # print(len(np.array(pcd.points)))
-o3d.visualization.draw_geometries([pcd])
+# o3d.visualization.draw_geometries([pcd])
