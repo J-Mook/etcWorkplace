@@ -1,0 +1,40 @@
+docker 
+
+>> sudo docker run -i -t -v /Users/jm/docker_ros:/catkin_ws -p 1009:22 --name ros ubuntu:18.04 /bin/bash : 도커 처음만들고 실행( -v /Users/jm/docker_ros:/catkin_ws 로컬저장소:컨테이너, -p 1009:22 포트1009 설정, --name ros 이름 ros, ubuntu:18.04 /bin/bash ubuntu 18.04 /bin/bash 이미지)
+
+>> docker exec -it ros bash : 도커에 여러개 콘솔 사용할때
+
+
+docker run -e DISPLAY=192.168.0.235:0 gns3/xeyes
+
+/etc/bash.bashrc 설정
+
+alias cw='cd /catkin_ws'
+alias cs='cd /catkin_ws/src'
+alias cm='cd /catkin_ws && catkin_make'
+source /opt/ros/melodic/setup.bash
+source /catkin_ws/devel/setup.bash
+export ROS_MASTER_URI=http://localhost:11311
+export ROS_HOSTNAME=localhost
+#export ROS_MASTER_URI=http://192.168.1.100:11311
+#export ROS_HOSTNAME=192.168.1.100
+
+ 이거로 ㄱㄱ 구글링 복붙하면 에러 (~/문법이 적용안되서 그런거로 추정)
+
+
+https://nha6ki.hatenablog.com/entry/2020/10/29/182007
+도커 GUI 구동방법 -> homebrew 에러로 실패 (이거만 해결되면 될듯?)
+-> Could not connect to any X display. 에러발생
+
+
+
+sudo docker run -i -t -e RESOLUTION=1920x1080 -v /Users/jm/docker_disp:/catkin_ws -p 1012:22 -p 5900:5900 --name ros_vnc ubuntu:18.04 /bin/bash
+
+apt-get install gnome-shell ubuntu-gnome-desktop
+
+<VNC viewer>
+ipadress : port
+ip adress : hostname -I
+port : vncserver -localhost(킬때 뜨는번호로 ㄲ)
+
+왜안됑라ㅣㅇㄴ;ㅓㅁ리ㅏㄴㅇ머;라ㅣㄴㅁ얼;ㅏㅣㄴ머;라ㅣㄴㅇ
