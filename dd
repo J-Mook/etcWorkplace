@@ -38,3 +38,33 @@ ip adress : hostname -I
 port : vncserver -localhost(킬때 뜨는번호로 ㄲ)
 
 왜안됑라ㅣㅇㄴ;ㅓㅁ리ㅏㄴㅇ머;라ㅣㄴㅁ얼;ㅏㅣㄴ머;라ㅣㄴㅇ
+
+
+ros melodic - docker (ㄹㅇros wiki 누가썼냐)
+
+sudo docker run -i -t -v /Users/jm/docker_ros:/catkin_ws -p 1009:22 --name ros ubuntu:18.04 /bin/bash
+# 도커 우분투에 /catkin_ws를 만들고 로컬의 /Users/jm/docker_ros와 연결
+
+apt install curl
+apt install lsb
+
+(도커에선 sudo ㄴㄴ)
+sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+
+curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | apt-key add -
+
+apt update
+apt install ros-melodic-desktop-full
+
+환경세팅
+echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+source /opt/ros/melodic/setup.bash
+
+
+sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+
+sudo apt install python-rosdep
+
+sudo rosdep init
+rosdep update
