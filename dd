@@ -68,3 +68,22 @@ sudo apt install python-rosdep
 
 sudo rosdep init
 rosdep update
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------
+
+
+docker run -it --rm --privileged --net=host --name=ros_disp -v /tmp/.X11-unix:/tmp/.X11-unix -v C:\docker:/catkin_ws -e DISPLAY=$DISPLAY -p 8888:8888 -p 6006:6006 ubuntu:18.04 /bin/bash
+
+
+
+
