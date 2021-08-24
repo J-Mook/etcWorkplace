@@ -1,12 +1,7 @@
 {
 	"folders": [
 		{
-			"name": "etcWorkplace",
 			"path": "."
-		},
-		{
-			"name": "open3d",
-			"path": "../../../../opt/anaconda3/lib/python3.8/site-packages/open3d"
 		}
 	],
 	"settings": {}
